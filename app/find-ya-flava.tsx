@@ -1,3 +1,12 @@
+The other AI is 100% correct. When you pasted my fix earlier, you accidentally replaced the entire file with just the bottom function, which deleted all your imports (useState, Link, etc.), causing TypeScript to panic on line 2.
+
+Also, your file path for the about page is actually app/about/page.tsx based on your screenshots, so the footer needs to link to /about, not /me.
+
+Let's wipe the slate clean and fix the build, fix the footer, and remove the "unknowns" block all at once.
+
+Overwrite your ENTIRE app/find-ya-flava.tsx file from top to bottom with this exact code:
+
+TypeScript
 'use client';
 
 import Link from 'next/link';
@@ -475,11 +484,25 @@ function ResultView({ preferences, result, onEdit, onExplore }: { preferences: P
 function Catalogue({ onStart }: { onStart: () => void }) {
   return (
     <main className="catalogue-page">
-      <header className="catalogue-intro"><p className="question-number">SUPPORTED SELECTION / 07 FLAVOURS</p><h1>Meet the freezer shelf.</h1><p>These concise descriptions come from the supplied manufacturer catalogue. Availability is not implied.</p><Button className="primary-cta compact" onClick={onStart}>Build my spoonful <ArrowRight /></Button></header>
+      <header className="catalogue-intro">
+        <p className="question-number">SUPPORTED SELECTION / 07 FLAVOURS</p>
+        <h1>Meet the freezer shelf.</h1>
+        <p>These concise descriptions come from the supplied manufacturer catalogue. Availability is not implied.</p>
+        <Button className="primary-cta compact" onClick={onStart}>Build my spoonful <ArrowRight /></Button>
+      </header>
       <section className="product-grid">
-        {PRODUCTS.map((product, index) => <article key={product.id} className="product-card"><div className="product-index">0{index + 1}</div><ProductArt product={product} /><div className="product-card-copy"><h2>{product.name}</h2><p>{product.description}</p><a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">View on Dr. Bombay <ExternalLink /></a></div></article>)}
+        {PRODUCTS.map((product, index) => (
+          <article key={product.id} className="product-card">
+            <div className="product-index">0{index + 1}</div>
+            <ProductArt product={product} />
+            <div className="product-card-copy">
+              <h2>{product.name}</h2>
+              <p>{product.description}</p>
+              <a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">View on Dr. Bombay <ExternalLink /></a>
+            </div>
+          </article>
+        ))}
       </section>
-      <section className="catalogue-unknowns"><strong>What the catalogue does not claim</strong><p>Chunk size, piece quantity, exact chewiness, density, and melting speed stay unknown unless the source descriptions document them.</p></section>
     </main>
   );
 }
@@ -550,12 +573,13 @@ export default function FindYaFlava() {
       {view === 'quiz' && <Quiz preferences={preferences} setPreferences={setPreferences} step={step} setStep={setStep} onFinish={finish} />}
       {view === 'result' && <ResultView preferences={preferences} result={result} onEdit={start} onExplore={explore} />}
       {view === 'catalogue' && <Catalogue onStart={start} />}
-      <footer>
-        <span>Find Ya Flava</span>
-        <p>Independent audition project. Not affiliated with Dr. Bombay.</p>
-        <Link href="/about" className="font-bold text-[#ff7b00] underline underline-offset-4">About the Applicant</Link>
+      <footer className="flex flex-col md:flex-row items-center justify-between p-8 bg-[#2b1915] text-[#fff8ec] gap-4 text-center md:text-left border-t-4 border-black mt-auto">
+        <span className="font-['Shrikhand'] text-2xl drop-shadow-[0_2px_0px_#000]">Find Ya Flava</span>
+        <p className="text-[11px] text-gray-400 font-bold max-w-xs">Independent audition project. Not affiliated with Dr. Bombay.</p>
+        <Link href="/about" className="font-black text-[#ff7b00] underline underline-offset-4 text-base hover:text-[#ffde59] transition-colors">
+          About the Applicant
+        </Link>
       </footer>
     </div>
   );
 }
-    
