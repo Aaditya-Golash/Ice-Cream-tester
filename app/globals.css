@@ -1,24 +1,14 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
-
-@custom-variant dark (&:is(.dark *));
-
-:root {
-  --cream: #fff8ec;
-  --paper: #fffdf7;
-  --chocolate: #2b1915;
-  --orange: #9f351d;
-  --berry: #a83758;
-}
-
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-/* Keep base body reset clean */
 body {
   margin: 0;
+  color: var(--chocolate);
+  background-color: var(--cream);
+  background-image: radial-gradient(rgba(63,33,25,.075) .55px, transparent .75px);
+  background-size: 5px 5px;
+  font-family: "Plus Jakarta Sans", "Avenir Next", Avenir, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-button, a { -webkit-tap-highlight-color: transparent; }
+h1, h2, .brand-mark, .spoon-receipt strong, .product-art > strong, .feedback-heading strong {
+  font-family: "Shrikhand", "Cooper Black", Georgia, serif !important;
+  font-weight: 400 !important;
+}
