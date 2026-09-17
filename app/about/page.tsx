@@ -32,18 +32,28 @@ export default function AboutPage() {
           />
         </div>
 
+        {/* BOX 1: The Palate & Story */}
         <div className="bg-[#2b104c] border-4 border-black rounded-3xl p-6 shadow-[0_8px_0px_#000] space-y-4 text-sm font-medium leading-relaxed text-[#fff8ec]">
+          <p className="text-xs font-black tracking-widest uppercase text-[#ff7b00] mb-1">The Palate</p>
           <p>
-            I just wrapped up a Computer Science degree with a Management minor at UBC. I have managed budgets as a VP of Finance and engineered full-stack software systems. But this is not a standard tech portfolio.
+            Growing up between India and the Middle East before moving to Canada completely rewired my palate. It trained me to spot global trends and mix cultural profiles that actually work on a spoon. 
           </p>
           <p>
-            Growing up between India and the Middle East before moving to Canada completely rewired my palate. I know how to spot global trends, and I know how to mix cultural profiles that actually work on a spoon. 
+            My all-time rotation proves it: <strong>Rose Mango Kulfi</strong> for straight nostalgia, heavy <strong>Dark Chocolate Brownie</strong> when I need that late-night crunch, and <strong>Strawberry Cheesecake</strong> for the perfect salty-sweet balance. 
           </p>
           <p>
-            I have also built and grown digital channels to millions of organic views. I understand the difference between what people say they want and what actually makes them stop scrolling. 
+            I entered this search because tasting is not just about eating on camera. It is about analyzing the culture of flavor and knowing what hits before the cravings even start.
+          </p>
+        </div>
+
+        {/* BOX 2: The Systems & Culture */}
+        <div className="bg-[#ffde59] text-black border-4 border-black rounded-3xl p-6 shadow-[0_8px_0px_#000] space-y-4 text-sm font-bold leading-relaxed">
+          <p className="text-xs font-black tracking-widest uppercase text-[#a83758] mb-1">The Playbook</p>
+          <p>
+            I just wrapped a CS degree and Management minor at UBC. I have managed budgets as a VP of Finance, engineered full-stack systems, and grown digital channels to millions of organic views. 
           </p>
           <p>
-            I build systems to solve friction. Right now, the friction is figuring out exactly what pint you need at 1 AM. The solution is this engine.
+            I know the difference between what people say they want, and what actually makes them stop scrolling. I build systems to solve friction. Right now, the friction is figuring out exactly what pint you need at 1 AM. The solution is this engine.
           </p>
         </div>
 
