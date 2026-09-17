@@ -4,31 +4,11 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Download, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FLAVOUR_LABELS, PIECE_LABELS, RIBBON_LABELS, type FlavourKey } from '@/lib/catalog';
+import { FLAVOUR_LABELS, PIECE_LABELS, RIBBON_LABELS } from '@/lib/catalog';
 import type { Preferences } from '@/lib/matcher';
+import { loadActivity, loadRequests, resetLocalData, type ActivityRecord, type RequestRecord } from '@/lib/client-state';
 
-const STORAGE = {
-  activity: 'findYaFlava.activity.v1',
-  requests: 'findYaFlava.requests.v1',
-  preferences: 'findYaFlava.preferences.v1',
-};
-
-type DashboardRecord = {
-  id: string;
-  createdAt: string;
-  preferences: Preferences;
-  recommendation: string | null;
-  score: number;
-  tryIt: boolean;
-  feedback?: { chooseAgain: 'yes'|'no'; pieces: string; bite: string; change: string };
-};
-
-type RequestRecord = {
-  id: string;
-  createdAt: string;
-  preferences: Preferences;
-  recommendation: string | null;
-};
+type DashboardRecord = Omit<ActivityRecord, 'signature'> & { signature?: string };
 
 const SAMPLE_RECORDS: DashboardRecord[] = [
   { id:'s1', createdAt:'2026-09-10', recommendation:'Strawberry Cream Dream', score:14, tryIt:true, preferences:{ flavours:['fruit','vanillaCream'], pieces:['crunchy'], ribbon:'fruitJam', city:'Toronto', wish:'Strawberry cheesecake with graham pieces', ...sampleDefaults() }, feedback:{ chooseAgain:'yes', pieces:'enough', bite:'right', change:'A little more jam.' } },
@@ -43,10 +23,6 @@ const SAMPLE_RECORDS: DashboardRecord[] = [
 
 function sampleDefaults(): Omit<Preferences, 'flavours'|'pieces'|'ribbon'|'city'|'wish'> {
   return { chocolateLocations:[], exclusions:[], pieceSize:'small', pieceAmount:'most', ribbonAmount:'little', softness:'edges', density:'any', priority:'flavour', discovery:'close' };
-}
-
-function load<T>(key: string): T[] {
-  try { const parsed = JSON.parse(window.localStorage.getItem(key) ?? '[]'); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
 }
 
 function countBy(items: string[]) {
@@ -89,14 +65,14 @@ export default function TeamDashboard() {
   const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [city, setCity] = useState('All cities');
 
-  const refresh = () => { setLocalRecords(load<DashboardRecord>(STORAGE.activity)); setRequests(load<RequestRecord>(STORAGE.requests)); };
+  const refresh = () => { setLocalRecords(loadActivity()); setRequests(loadRequests()); };
   useEffect(refresh, []);
   const cities = useMemo(() => Array.from(new Set(localRecords.map((record) => record.preferences.city.trim()).filter(Boolean))).sort(), [localRecords]);
   const filtered = city === 'All cities' ? localRecords : localRecords.filter((record) => record.preferences.city === city);
 
   const reset = () => {
     if (!window.confirm('Reset quiz activity, saved requests, feedback, and preferences stored in this browser?')) return;
-    Object.values(STORAGE).forEach((key) => window.localStorage.removeItem(key));
+    resetLocalData();
     setLocalRecords([]); setRequests([]); setCity('All cities');
   };
 

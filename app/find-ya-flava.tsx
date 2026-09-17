@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, ExternalLink, ImageDown, RotateCcw, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,48 +22,22 @@ import {
   findAlternative,
   findMatch,
   preferenceSignature,
-  publicPreferences,
   type MatchResult,
   type Preferences,
 } from '@/lib/matcher';
 import { downloadFlavaCard } from '@/lib/flava-card';
-
-const STORAGE = {
-  preferences: 'findYaFlava.preferences.v1',
-  activity: 'findYaFlava.activity.v1',
-  requests: 'findYaFlava.requests.v1',
-};
+import {
+  buildShareUrl,
+  loadActivity,
+  loadPreferences,
+  loadRequests,
+  readSharedPreferences,
+  saveActivity,
+  savePreferences,
+  saveRequests,
+} from '@/lib/client-state';
 
 type View = 'landing' | 'quiz' | 'result' | 'catalogue';
-type ActivityRecord = {
-  id: string;
-  signature: string;
-  createdAt: string;
-  preferences: Preferences;
-  recommendation: string | null;
-  score: number;
-  tryIt: boolean;
-  feedback?: {
-    chooseAgain: 'yes' | 'no';
-    pieces: 'tooFew' | 'enough' | 'tooMany';
-    bite: 'tooHard' | 'right' | 'tooSoft';
-    change: string;
-  };
-};
-
-function readList<T>(key: string): T[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const value = JSON.parse(window.localStorage.getItem(key) ?? '[]');
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeList<T>(key: string, value: T[]) {
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
 
 function toggleItem<T>(items: T[], item: T, limit?: number) {
   if (items.includes(item)) return items.filter((entry) => entry !== item);
@@ -80,7 +54,6 @@ function SiteHeader({ onExplore }: { onExplore: () => void }) {
       </button>
       <nav aria-label="Main navigation">
         <button onClick={onExplore}>Flavours</button>
-        <Link href="/team">Team demo</Link>
       </nav>
     </header>
   );
@@ -204,10 +177,13 @@ function Quiz({ preferences, setPreferences, step, setStep, onFinish }: {
   setStep: (value: number) => void;
   onFinish: () => void;
 }) {
+  const heading = useRef<HTMLHeadingElement>(null);
   const set = <K extends keyof Preferences>(key: K, value: Preferences[K]) => setPreferences((current) => ({ ...current, [key]: value }));
   const pieceSelected = preferences.pieces.some((item) => item !== 'none');
   const canContinue = step === 0 ? preferences.flavours.length > 0 : step === 1 ? preferences.pieces.length > 0 : true;
   const titles = ['Flavour', 'Pieces', 'Ribbons & softness', 'What to keep'];
+
+  useEffect(() => { heading.current?.focus(); }, [step]);
 
   return (
     <main className="quiz-page">
@@ -220,7 +196,7 @@ function Quiz({ preferences, setPreferences, step, setStep, onFinish }: {
           {step === 0 && (
             <>
               <p className="question-number">01 / FIRST BITE</p>
-              <h2>What do you want the first bite to taste like?</h2>
+              <h2 ref={heading} tabIndex={-1}>What do you want the first bite to taste like?</h2>
               <p className="question-help">Choose up to two.</p>
               <div className="choice-grid two-col">
                 {(Object.keys(FLAVOUR_LABELS) as FlavourKey[]).map((key) => <ChoiceButton key={key} title={FLAVOUR_LABELS[key]} selected={preferences.flavours.includes(key)} onClick={() => set('flavours', toggleItem(preferences.flavours, key, 2))} />)}
@@ -246,7 +222,7 @@ function Quiz({ preferences, setPreferences, step, setStep, onFinish }: {
           {step === 1 && (
             <>
               <p className="question-number">02 / THE GOOD BITS</p>
-              <h2>What are you digging for?</h2>
+              <h2 ref={heading} tabIndex={-1}>What are you digging for?</h2>
               <p className="question-help">Choose compatible combinations. “Just the ice cream” stands alone.</p>
               <div className="choice-grid two-col">
                 {(Object.keys(PIECE_LABELS) as PieceKey[]).map((key) => <ChoiceButton key={key} title={PIECE_LABELS[key]} selected={preferences.pieces.includes(key)} onClick={() => set('pieces', key === 'none' ? ['none'] : toggleItem(preferences.pieces.filter((item) => item !== 'none'), key))} />)}
@@ -273,7 +249,7 @@ function Quiz({ preferences, setPreferences, step, setStep, onFinish }: {
           {step === 2 && (
             <>
               <p className="question-number">03 / FINISH THE SPOON</p>
-              <h2>Anything running through it?</h2>
+              <h2 ref={heading} tabIndex={-1}>Anything running through it?</h2>
               <div className="choice-grid ribbon-grid">
                 {(Object.keys(RIBBON_LABELS) as RibbonKey[]).map((key) => <ChoiceButton key={key} title={RIBBON_LABELS[key]} selected={preferences.ribbon === key} onClick={() => set('ribbon', key)} />)}
               </div>
@@ -296,7 +272,7 @@ function Quiz({ preferences, setPreferences, step, setStep, onFinish }: {
           {step === 3 && (
             <>
               <p className="question-number">04 / THE DECIDING BITE</p>
-              <h2>What should we get right first?</h2>
+              <h2 ref={heading} tabIndex={-1}>What should we get right first?</h2>
               <div className="choice-grid three-col">
                 {([['flavour','Flavour'],['pieces','Pieces'],['ribbon','Ribbon']] as const).map(([key,label]) => <ChoiceButton key={key} title={label} selected={preferences.priority === key} onClick={() => set('priority', key)} />)}
               </div>
@@ -307,7 +283,7 @@ function Quiz({ preferences, setPreferences, step, setStep, onFinish }: {
                 </div>
               </div>
               <div className="field-row">
-                <label>Anything you wish came as ice cream? <span>Optional</span><textarea value={preferences.wish} onChange={(event) => set('wish', event.target.value)} placeholder="A dessert, a snack, something you used to buy." maxLength={280} /></label>
+                <label>Anything you wish came as ice cream? <span>Optional</span><textarea value={preferences.wish} onChange={(event) => set('wish', event.target.value)} placeholder="A dessert, a snack, something you used to buy." maxLength={300} /></label>
                 <label>City <span>Optional and skippable</span><input value={preferences.city} onChange={(event) => set('city', event.target.value)} placeholder="e.g. Toronto" maxLength={80} /></label>
               </div>
               <p className="microcopy culture-note">We keep your food reference in your own words. City never changes the recommendation.</p>
@@ -347,43 +323,40 @@ function ResultView({ preferences, result, onEdit, onExplore }: { preferences: P
   const signature = preferenceSignature(preferences);
 
   useEffect(() => {
-    const requests = readList<{ signature: string }>(STORAGE.requests);
+    const requests = loadRequests();
     setSaved(requests.some((request) => request.signature === signature));
-    const activity = readList<ActivityRecord>(STORAGE.activity).find((record) => record.signature === signature);
+    const activity = loadActivity().find((record) => record.signature === signature);
     setTried(activity?.tryIt ?? false);
     setFeedbackSaved(Boolean(activity?.feedback));
   }, [signature]);
 
   const saveRequest = () => {
-    const requests = readList<Record<string, unknown> & { signature: string }>(STORAGE.requests);
+    const requests = loadRequests();
     if (!requests.some((request) => request.signature === signature)) {
       requests.push({ id: crypto.randomUUID(), signature, createdAt: new Date().toISOString(), preferences, recommendation: result?.product.name ?? null });
-      writeList(STORAGE.requests, requests);
+      saveRequests(requests);
     }
     setSaved(true);
   };
 
   const markTry = () => {
-    const activity = readList<ActivityRecord>(STORAGE.activity);
+    const activity = loadActivity();
     const next = activity.map((record) => record.signature === signature ? { ...record, tryIt: true } : record);
-    writeList(STORAGE.activity, next);
+    saveActivity(next);
     setTried(true);
   };
 
   const submitFeedback = () => {
-    const activity = readList<ActivityRecord>(STORAGE.activity);
+    const activity = loadActivity();
     const next = activity.map((record) => record.signature === signature ? { ...record, feedback: { ...feedback, change: feedback.change.trim() } } : record);
-    writeList(STORAGE.activity, next);
+    saveActivity(next);
     setFeedbackSaved(true);
   };
 
-  const buildShareUrl = () => {
-    const encoded = btoa(JSON.stringify(publicPreferences(preferences))).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');
-    return `${window.location.origin}/?spoon=${encoded}`;
-  };
-
   const share = async () => {
-    const url = buildShareUrl();
+    let url: string;
+    try { url = buildShareUrl(preferences); }
+    catch { setShareStatus('This result could not be safely encoded.'); return; }
     setShareUrl(url);
     try {
       if (navigator.share) {
@@ -424,10 +397,10 @@ function ResultView({ preferences, result, onEdit, onExplore }: { preferences: P
       <section className="result-hero">
         <div className="result-copy">
           <p className="question-number">{showAlternative ? 'ANOTHER OPTION' : 'YOUR CLOSEST MATCH'}</p>
-          {!hasStrongMatch && <div className="partial-banner">We don’t have that combination in this selection. Here’s the nearest eligible documented option.</div>}
+          {!hasStrongMatch && <div className="partial-banner">This selection doesn’t have that combination. Here’s the nearest eligible documented option.</div>}
           <h1>{shown.product.name}</h1>
           <p className="product-description">{shown.product.description}</p>
-          <a className="source-link" href={shown.product.sourceUrl} target="_blank" rel="noreferrer">Official product page <ExternalLink aria-hidden="true" /></a>
+          <a className="source-link" href={shown.product.sourceUrl} target="_blank" rel="noopener noreferrer">View on Dr. Bombay <ExternalLink aria-hidden="true" /></a>
           {showAlternative && alternative && <p className="tradeoff-note"><strong>The tradeoff:</strong> {explainAlternative(preferences, alternative)}</p>}
           <div className="hero-actions result-actions">
             <Button className="primary-cta compact" onClick={markTry}>{tried ? <><Check /> I’d try it</> : 'I’d try this'}</Button>
@@ -489,7 +462,7 @@ function ResultView({ preferences, result, onEdit, onExplore }: { preferences: P
           <div><h3>Would you choose it again?</h3><div className="segmented">{(['yes','no'] as const).map((key) => <button key={key} className={feedback.chooseAgain === key ? 'active' : ''} onClick={() => setFeedback({ ...feedback, chooseAgain: key })}>{key === 'yes' ? 'Yes' : 'No'}</button>)}</div></div>
           <div><h3>Pieces</h3><div className="segmented">{([['tooFew','Too few'],['enough','Enough'],['tooMany','Too many']] as const).map(([key,label]) => <button key={key} className={feedback.pieces === key ? 'active' : ''} onClick={() => setFeedback({ ...feedback, pieces: key })}>{label}</button>)}</div></div>
           <div><h3>Bite</h3><div className="segmented">{([['tooHard','Too hard'],['right','Right'],['tooSoft','Too soft']] as const).map(([key,label]) => <button key={key} className={feedback.bite === key ? 'active' : ''} onClick={() => setFeedback({ ...feedback, bite: key })}>{label}</button>)}</div></div>
-          <label>What would you change?<textarea value={feedback.change} onChange={(event) => setFeedback({ ...feedback, change: event.target.value })} maxLength={280} /></label>
+          <label>What would you change?<textarea value={feedback.change} onChange={(event) => setFeedback({ ...feedback, change: event.target.value })} maxLength={500} /></label>
           <Button className="primary-cta compact" onClick={submitFeedback}>{feedbackSaved ? <><Check /> Feedback saved</> : 'Save tasting feedback'}</Button>
           <p className="microcopy">“I’d try this” is kept separate from actual tasting feedback.</p>
         </div>}
@@ -504,11 +477,32 @@ function Catalogue({ onStart }: { onStart: () => void }) {
     <main className="catalogue-page">
       <header className="catalogue-intro"><p className="question-number">SUPPORTED SELECTION / 07 FLAVOURS</p><h1>Meet the freezer shelf.</h1><p>These concise descriptions come from the supplied manufacturer catalogue. Availability is not implied.</p><Button className="primary-cta compact" onClick={onStart}>Build my spoonful <ArrowRight /></Button></header>
       <section className="product-grid">
-        {PRODUCTS.map((product, index) => <article key={product.id} className="product-card"><div className="product-index">0{index + 1}</div><ProductArt product={product} /><div className="product-card-copy"><h2>{product.name}</h2><p>{product.description}</p><a href={product.sourceUrl} target="_blank" rel="noreferrer">Official product page <ExternalLink /></a></div></article>)}
+        {PRODUCTS.map((product, index) => <article key={product.id} className="product-card"><div className="product-index">0{index + 1}</div><ProductArt product={product} /><div className="product-card-copy"><h2>{product.name}</h2><p>{product.description}</p><a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">View on Dr. Bombay <ExternalLink /></a></div></article>)}
       </section>
       <section className="catalogue-unknowns"><strong>What the catalogue does not claim</strong><p>Chunk size, piece quantity, exact chewiness, density, and melting speed stay unknown unless the source descriptions document them.</p></section>
     </main>
   );
+}
+
+const DEMO_BLUEBERRY: Preferences = {
+  ...DEFAULT_PREFERENCES, flavours: ['baked', 'fruit'], pieces: ['crunchy'], pieceSize: 'small',
+  pieceAmount: 'most', ribbon: 'fruitJam', ribbonAmount: 'little', softness: 'edges', city: 'Toronto',
+};
+
+const DEMO_UNMET: Preferences = {
+  ...DEFAULT_PREFERENCES, flavours: ['chocolate'], chocolateLocations: ['In the ice cream'], pieces: ['chewy'],
+  pieceSize: 'big', pieceAmount: 'packed', ribbon: 'fudge', ribbonAmount: 'thick', softness: 'shape',
+  priority: 'pieces', wish: 'A warm brownie with fudge, as ice cream', city: 'Toronto',
+};
+
+function DemoToolbar({ onReset, onLoad }: { onReset: () => void; onLoad: (preferences: Preferences) => void }) {
+  return <aside className="demo-toolbar" aria-label="Presentation controls">
+    <strong>Presentation</strong>
+    <button onClick={onReset}>Reset quiz</button>
+    <button onClick={() => onLoad(DEMO_BLUEBERRY)}>Load blueberry / cinnamon / crunch</button>
+    <button onClick={() => onLoad(DEMO_UNMET)}>Load unmet chocolate / brownie</button>
+    <Link href="/team">Open team demo</Link>
+  </aside>;
 }
 
 export default function FindYaFlava() {
@@ -516,50 +510,47 @@ export default function FindYaFlava() {
   const [step, setStep] = useState(0);
   const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
   const [result, setResult] = useState<MatchResult | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
-    const shared = new URLSearchParams(window.location.search).get('spoon');
+    setDemoMode(new URLSearchParams(window.location.search).get('demo') === '1');
+    const shared = readSharedPreferences(window.location.hash);
     if (shared) {
-      try {
-        const normalized = shared.replaceAll('-','+').replaceAll('_','/').padEnd(Math.ceil(shared.length / 4) * 4, '=');
-        const decoded = JSON.parse(atob(normalized));
-        const next = { ...DEFAULT_PREFERENCES, ...decoded, wish: '', city: '' } as Preferences;
-        setPreferences(next); setResult(findMatch(next)); setView('result');
-        return;
-      } catch { /* Ignore malformed share data and show the landing page. */ }
+      setPreferences(shared); setResult(findMatch(shared)); setView('result');
+      return;
     }
-    try {
-      const saved = window.localStorage.getItem(STORAGE.preferences);
-      if (saved) setPreferences({ ...DEFAULT_PREFERENCES, ...JSON.parse(saved) });
-    } catch { /* Keep defaults when storage is unavailable. */ }
+    setPreferences(loadPreferences());
   }, []);
 
   useEffect(() => {
-    try { window.localStorage.setItem(STORAGE.preferences, JSON.stringify(preferences)); } catch { /* The experience still works without persistence. */ }
+    savePreferences(preferences);
   }, [preferences]);
 
   const finish = () => {
     const match = findMatch(preferences);
     const signature = preferenceSignature(preferences);
-    const activity = readList<ActivityRecord>(STORAGE.activity);
+    const activity = loadActivity();
     if (!activity.some((record) => record.signature === signature)) {
       activity.push({ id: crypto.randomUUID(), signature, createdAt: new Date().toISOString(), preferences, recommendation: match?.product.name ?? null, score: match?.score ?? 0, tryIt: false });
-      writeList(STORAGE.activity, activity);
+      saveActivity(activity);
     }
     setResult(match); setView('result'); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const start = () => { setView('quiz'); setStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const explore = () => { setView('catalogue'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const resetDemo = () => { setPreferences({ ...DEFAULT_PREFERENCES }); setResult(null); setStep(0); setView('landing'); };
+  const loadDemo = (next: Preferences) => { setPreferences(next); setResult(findMatch(next)); setView('result'); window.scrollTo({ top: 0 }); };
 
   return (
     <div className="site-shell">
+      {demoMode && <DemoToolbar onReset={resetDemo} onLoad={loadDemo} />}
       <SiteHeader onExplore={explore} />
       {view === 'landing' && <Landing onStart={start} onExplore={explore} />}
       {view === 'quiz' && <Quiz preferences={preferences} setPreferences={setPreferences} step={step} setStep={setStep} onFinish={finish} />}
       {view === 'result' && <ResultView preferences={preferences} result={result} onEdit={start} onExplore={explore} />}
       {view === 'catalogue' && <Catalogue onStart={start} />}
-      <footer><span>Find Ya Flava</span><p>Independent audition project. Not affiliated with Dr. Bombay.</p></footer>
+      <footer><span>Find Ya Flava</span><p>Independent audition project. Not affiliated with Dr. Bombay.</p><Link href="/team">Demo dashboard</Link></footer>
     </div>
   );
 }

@@ -24,12 +24,12 @@
 }
 
 :root {
-  --cream: #f8edcf;
-  --paper: #fff8e7;
-  --chocolate: #3f2119;
-  --orange: #f26a2e;
-  --orange-dark: #c84419;
-  --berry: #a32045;
+  --cream: #fff8ec;
+  --paper: #fffdf7;
+  --chocolate: #2b1915;
+  --orange: #9f351d;
+  --orange-dark: #7f2816;
+  --berry: #a83758;
   --peach: #f4b07b;
   --mint: #bfd7cd;
   --line: rgba(63, 33, 25, 0.24);
@@ -147,6 +147,11 @@ h1 em { color: var(--berry); font-weight: inherit; }
 footer { min-height: 94px; padding: 25px clamp(20px, 5vw, 72px); display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--chocolate); color: var(--cream); }
 footer span { font: 900 19px Georgia, serif; }
 footer p { margin: 0; font-size: 11px; letter-spacing: .06em; }
+footer a { font-size: 11px; font-weight: 900; text-underline-offset: 5px; }
+
+.demo-toolbar { min-height: 54px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px clamp(20px,5vw,72px); background: var(--chocolate); color: var(--cream); }
+.demo-toolbar strong { margin-right: 8px; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; }
+.demo-toolbar button, .demo-toolbar a { min-height: 36px; padding: 7px 11px; border: 1px solid rgba(255,248,236,.42); border-radius: 9px; background: rgba(255,248,236,.08); color: inherit; cursor: pointer; font-size: 10px; font-weight: 800; text-decoration: none; }
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; }
@@ -198,6 +203,7 @@ footer p { margin: 0; font-size: 11px; letter-spacing: .06em; }
 .choice-grid.three-col { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .choice-grid.ribbon-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .choice-card { min-height: 80px; position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 17px 48px 17px 18px; border: 2px solid var(--chocolate); background: var(--cream); color: var(--chocolate); text-align: left; cursor: pointer; transition: background .15s ease, transform .15s ease; }
+.choice-card, .primary-cta, textarea, input, select, .pill-row button, .segmented button, .size-choices button, .softness-grid button { border-radius: 10px; }
 .choice-card:hover { transform: translateY(-2px); background: #fff4d8; }
 .choice-card.selected { background: var(--orange); box-shadow: 4px 4px 0 var(--chocolate); }
 .choice-card strong { font-size: 14px; line-height: 1.25; }
