@@ -550,7 +550,7 @@ export default function FindYaFlava() {
       {view === 'quiz' && <Quiz preferences={preferences} setPreferences={setPreferences} step={step} setStep={setStep} onFinish={finish} />}
       {view === 'result' && <ResultView preferences={preferences} result={result} onEdit={start} onExplore={explore} />}
       {view === 'catalogue' && <Catalogue onStart={start} />}
-      <footer><span>Find Ya Flava</span><p>Independent audition project. Not affiliated with Dr. Bombay.</p><Link href="/team">Demo dashboard</Link></footer>
+      <footer><span>Find Ya Flava</span><p>Independent audition project. Not affiliated with Dr. Bombay.</p><Link href="/about" className="font-bold text-[#ff7b00] underline underline-offset-4">About the Creator</Link>
     </div>
   );
 }
