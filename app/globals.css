@@ -388,6 +388,12 @@ textarea { min-height: 94px; resize: vertical; }
 .compare-list i { top:0; background:var(--orange); }
 .compare-list b { bottom:0; background:var(--berry); }
 .compare-list small { font-size:9px; color:#72584c; }
+.chart-legend { display:flex; gap:14px; flex-wrap:wrap; margin:16px 0 4px; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+.chart-legend span { display:inline-flex; align-items:center; gap:6px; }
+.chart-legend i, .chart-legend b { width:18px; height:7px; display:inline-block; border:1px solid var(--chocolate); }
+.chart-legend i { background:var(--orange); }
+.chart-legend b { background:var(--berry); }
+.dashboard-toolbar button:disabled { opacity:.45; cursor:not-allowed; }
 .feedback-readout > strong { display:block; margin:22px 0; color:var(--berry); font:900 23px Georgia,serif; }
 .feedback-readout p { padding:10px 0; border-bottom:1px solid var(--line); font:italic 14px/1.5 Georgia,serif; }
 .feedback-readout span { display:block; margin-top:5px; font:700 9px/1.2 "Avenir Next",sans-serif; text-transform:uppercase; letter-spacing:.06em; }
@@ -395,6 +401,7 @@ textarea { min-height: 94px; resize: vertical; }
 .unmet-list > div { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:12px 0; border-bottom:1px solid var(--line); font-size:12px; }
 .empty-data { color:#765e51; font-style:italic; }
 .request-texts { background:var(--mint); }
+.request-texts.sample-requests { background:#e9dcc1; }
 .request-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
 .request-cards article { min-height:160px; display:flex; flex-direction:column; justify-content:space-between; padding:22px; border:2px solid var(--chocolate); background:var(--paper); box-shadow:4px 4px 0 var(--chocolate); }
 .request-cards p { margin:0; font:italic 18px/1.35 Georgia,serif; }

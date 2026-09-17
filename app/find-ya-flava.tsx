@@ -501,7 +501,7 @@ function DemoToolbar({ onReset, onLoad }: { onReset: () => void; onLoad: (prefer
     <button onClick={onReset}>Reset quiz</button>
     <button onClick={() => onLoad(DEMO_BLUEBERRY)}>Load blueberry / cinnamon / crunch</button>
     <button onClick={() => onLoad(DEMO_UNMET)}>Load unmet chocolate / brownie</button>
-    <Link href="/team">Open team demo</Link>
+    <Link href="/team?demo=1">Open team demo</Link>
   </aside>;
 }
 

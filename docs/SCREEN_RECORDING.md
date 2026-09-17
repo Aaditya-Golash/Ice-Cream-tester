@@ -31,7 +31,7 @@ The presentation toolbar contains four controls:
 - **Reset quiz** returns to a clean landing page.
 - **Load blueberry / cinnamon / crunch** shows the strongest documented matching path.
 - **Load unmet chocolate / brownie** shows the honest partial-match path and Cutting-Chai Kulfi concept.
-- **Open team demo** opens the local analytics prototype.
+- **Open team demo** opens the analytics prototype in a clearly labelled simulated-preview mode. Use **Show real local activity** to return to device-only data.
 
 These presets run the same deterministic matcher as the quiz. They do not hard-code the displayed product result.
 

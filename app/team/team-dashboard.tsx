@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Download, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Download, Eye, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FLAVOUR_LABELS, PIECE_LABELS, RIBBON_LABELS } from '@/lib/catalog';
 import type { Preferences } from '@/lib/matcher';
@@ -36,7 +36,7 @@ function Bars({ values, total, labels }: { values: Record<string,number>; total:
   return <div className="mini-bars">{entries.map(([key,value]) => <div key={key} className="bar-row"><span>{labels?.[key] ?? key}</span><div><i style={{ width:`${(value/max)*100}%` }} /></div><strong>{value}<small> / {total}</small></strong></div>)}</div>;
 }
 
-function DatasetPanel({ title, badge, records, fictional }: { title: string; badge: string; records: DashboardRecord[]; fictional?: boolean }) {
+function DatasetPanel({ title, badge, records, fictional, note }: { title: string; badge: string; records: DashboardRecord[]; fictional?: boolean; note?: string }) {
   const flavourCounts = countBy(records.flatMap((record) => record.preferences.flavours));
   const textureCounts = countBy(records.flatMap((record) => [...record.preferences.pieces, record.preferences.ribbon]));
   const recommendationCounts = countBy(records.flatMap((record) => record.recommendation ? [record.recommendation] : []));
@@ -46,12 +46,12 @@ function DatasetPanel({ title, badge, records, fictional }: { title: string; bad
   return (
     <section className={`dataset-panel ${fictional ? 'sample-panel' : ''}`}>
       <header><div><span className="dataset-badge">{badge}</span><h2>{title}</h2></div><strong className="sample-size">n = {records.length}</strong></header>
-      {fictional && <p className="fictional-note">Illustrative sample only. These records are fictional and never mixed into this browser’s activity.</p>}
+      {fictional && <p className="fictional-note">{note ?? 'Illustrative sample only. These records are fictional and never mixed into this browser’s activity.'}</p>}
       <div className="kpi-row"><div><small>Quiz submissions</small><strong>{records.length}</strong></div><div><small>“I’d try it”</small><strong>{records.filter((record) => record.tryIt).length}</strong></div><div><small>Tasting feedback</small><strong>{feedback.length}</strong></div><div><small>Unsupported requests</small><strong>{missed.length}</strong></div></div>
       <div className="dashboard-grid">
         <article><h3>Requested flavours</h3><p>What people selected for the first bite.</p><Bars values={flavourCounts} total={records.length} labels={FLAVOUR_LABELS} /></article>
         <article><h3>Requested textures</h3><p>Piece and ribbon choices—not product measurements.</p><Bars values={textureCounts} total={records.length} labels={{ ...PIECE_LABELS, ...RIBBON_LABELS }} /></article>
-        <article><h3>Recommendations vs interest</h3><p>Recommended results compared with explicit “I’d try it” selections.</p><div className="compare-list">{Object.entries(recommendationCounts).map(([name,count]) => <div key={name}><span>{name}</span><div><i style={{ width:`${(count/Math.max(records.length,1))*100}%` }} /><b style={{ width:`${((triedCounts[name] ?? 0)/Math.max(records.length,1))*100}%` }} /></div><small>{count} rec · {triedCounts[name] ?? 0} try</small></div>)}</div>
+        <article><h3>Recommendations vs interest</h3><p>Recommended results compared with explicit “I’d try it” selections.</p><div className="chart-legend"><span><i /> Recommended</span><span><b /> Would try</span></div><div className="compare-list">{Object.entries(recommendationCounts).map(([name,count]) => <div key={name}><span>{name}</span><div><i style={{ width:`${(count/Math.max(records.length,1))*100}%` }} /><b style={{ width:`${((triedCounts[name] ?? 0)/Math.max(records.length,1))*100}%` }} /></div><small>{count} recommended · {triedCounts[name] ?? 0} would try</small></div>)}</div>
         </article>
         <article><h3>Actual tasting feedback</h3><p>Only entries submitted after trying a flavour.</p>{feedback.length ? <div className="feedback-readout"><strong>{feedback.filter((record) => record.feedback?.chooseAgain === 'yes').length} would choose it again</strong>{feedback.map((record) => <p key={record.id}>“{record.feedback?.change || 'No written change.'}” <span>— {record.recommendation}</span></p>)}</div> : <p className="empty-data">No tasting feedback entered.</p>}</article>
       </div>
@@ -64,11 +64,16 @@ export default function TeamDashboard() {
   const [localRecords, setLocalRecords] = useState<DashboardRecord[]>([]);
   const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [city, setCity] = useState('All cities');
+  const [previewSample, setPreviewSample] = useState(false);
 
-  const refresh = () => { setLocalRecords(loadActivity()); setRequests(loadRequests()); };
+  const refresh = () => { setLocalRecords(loadActivity()); setRequests(loadRequests()); setPreviewSample(new URLSearchParams(window.location.search).get('demo') === '1'); };
   useEffect(refresh, []);
-  const cities = useMemo(() => Array.from(new Set(localRecords.map((record) => record.preferences.city.trim()).filter(Boolean))).sort(), [localRecords]);
-  const filtered = city === 'All cities' ? localRecords : localRecords.filter((record) => record.preferences.city === city);
+  const activeRecords = previewSample ? SAMPLE_RECORDS : localRecords;
+  const displayedRequests: RequestRecord[] = previewSample
+    ? SAMPLE_RECORDS.slice(0, 6).map((record) => ({ id: `preview-${record.id}`, signature: `preview-${record.id}`, createdAt: record.createdAt, preferences: record.preferences, recommendation: record.recommendation }))
+    : requests;
+  const cities = useMemo(() => Array.from(new Set(activeRecords.map((record) => record.preferences.city.trim()).filter(Boolean))).sort(), [activeRecords]);
+  const filtered = city === 'All cities' ? activeRecords : activeRecords.filter((record) => record.preferences.city === city);
 
   const reset = () => {
     if (!window.confirm('Reset quiz activity, saved requests, feedback, and preferences stored in this browser?')) return;
@@ -84,11 +89,11 @@ export default function TeamDashboard() {
   return (
     <main className="team-page">
       <header className="team-header"><div><span className="demo-label">DEMO DASHBOARD</span><h1>What the spoonfuls are asking for.</h1><p>A prototype view of how preference signals could inform product decisions—without overstating a tiny sample.</p></div><Link href="/" className="back-home"><ArrowLeft /> Back to the taster</Link></header>
-      <section className="storage-explainer"><strong>Local means local.</strong><p>This browser’s activity comes only from quizzes completed on this device. localStorage does not collect responses from other visitors. A production version would need shared storage and consent-aware data handling.</p></section>
-      <div className="dashboard-toolbar"><label>Filter this browser by city<select value={city} onChange={(event) => setCity(event.target.value)}><option>All cities</option>{cities.map((item) => <option key={item}>{item}</option>)}</select></label><div><Button variant="outline" onClick={exportData}><Download /> Export local JSON</Button><Button variant="ghost" onClick={reset}><RotateCcw /> Reset local data</Button></div></div>
-      <DatasetPanel title="This browser’s activity" badge="LOCAL / DEVICE-ONLY" records={filtered} />
-      <section className="request-texts"><header><div><span className="dataset-badge">LOCAL / SAVED REQUESTS</span><h2>Food references, in their own words</h2></div><strong className="sample-size">n = {requests.length}</strong></header>{requests.length ? <div className="request-cards">{requests.map((request) => <article key={request.id}><p>“{request.preferences.wish.trim() || 'No written food reference.'}”</p><span>{request.preferences.city || 'No city supplied'} · {request.recommendation ?? 'No eligible recommendation'}</span></article>)}</div> : <p className="empty-data">No flavour requests saved in this browser yet.</p>}</section>
-      <DatasetPanel title="Illustrative sample data" badge="FICTIONAL / FOR DEMO" records={SAMPLE_RECORDS} fictional />
+      <section className="storage-explainer"><strong>Local means local.</strong><p>This browser only sees quizzes completed on this device. Friends using their own phones or laptops will not appear here because this prototype has no shared database. Use the simulated preview for recording; it is always labelled and never presented as collected activity.</p></section>
+      <div className="dashboard-toolbar"><label>Filter displayed data by city<select value={city} onChange={(event) => setCity(event.target.value)}><option>All cities</option>{cities.map((item) => <option key={item}>{item}</option>)}</select></label><div><Button variant="outline" onClick={() => { setPreviewSample((value) => !value); setCity('All cities'); }}><Eye /> {previewSample ? 'Show real local activity' : 'Load simulated preview'}</Button><Button variant="outline" onClick={exportData} disabled={previewSample}><Download /> Export local JSON</Button><Button variant="ghost" onClick={reset} disabled={previewSample}><RotateCcw /> Reset local data</Button></div></div>
+      <DatasetPanel title={previewSample ? 'Simulated presentation preview' : 'This browser’s activity'} badge={previewSample ? 'SIMULATED / NOT COLLECTED' : 'LOCAL / DEVICE-ONLY'} records={filtered} fictional={previewSample} note="Recording preview only: all records below are fictional. They are not your friends’ submissions and are not written into local storage." />
+      <section className={`request-texts ${previewSample ? 'sample-requests' : ''}`}><header><div><span className="dataset-badge">{previewSample ? 'SIMULATED / NOT COLLECTED' : 'LOCAL / SAVED REQUESTS'}</span><h2>Food references, in their own words</h2></div><strong className="sample-size">n = {displayedRequests.length}</strong></header>{previewSample && <p className="fictional-note">Fictional recording examples—not submissions from friends or visitors.</p>}{displayedRequests.length ? <div className="request-cards">{displayedRequests.map((request) => <article key={request.id}><p>“{request.preferences.wish.trim() || 'No written food reference.'}”</p><span>{request.preferences.city || 'No city supplied'} · {request.recommendation ?? 'No eligible recommendation'}</span></article>)}</div> : <p className="empty-data">No flavour requests saved in this browser yet.</p>}</section>
+      {!previewSample && <DatasetPanel title="Illustrative sample data" badge="FICTIONAL / FOR DEMO" records={SAMPLE_RECORDS} fictional />}
       <footer><span>Find Ya Flava</span><p>Independent audition project. Not affiliated with Dr. Bombay.</p></footer>
     </main>
   );
