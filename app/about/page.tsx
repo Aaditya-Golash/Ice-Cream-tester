@@ -33,28 +33,28 @@ export default function AboutPage() {
             />
           </div>
 
-          {/* BOX 1: The Palate & Story */}
+          {/* BOX 1: The Story & The Palate */}
           <div className="bg-[#2b104c] border-4 border-black rounded-3xl p-6 shadow-[0_8px_0px_#000] space-y-4 text-sm font-medium leading-relaxed text-[#fff8ec]">
             <p className="text-xs font-black tracking-widest uppercase text-[#ff7b00] mb-1">The Palate</p>
             <p>
-              Growing up between India and the Middle East before moving to Canada completely rewired my palate. It trained me to spot global trends and mix cultural profiles that actually work on a spoon. 
+              I used to be incredibly unhealthy. I completely turned my life around and built a strict fitness routine. Most people give up their favorite treats when they get healthy. I refused to drop ice cream. I simply learned how to taste it with intention.
             </p>
             <p>
-              My all-time rotation proves it: <strong>Rose Mango Kulfi</strong> for straight nostalgia, heavy <strong>Dark Chocolate Brownie</strong> when I need that late-night crunch, and <strong>Strawberry Cheesecake</strong> for the perfect salty-sweet balance. 
+              I grew up in India and spent time traveling across the Middle East before finally moving to Canada. Experiencing so many different cultures totally rewired my palate. My personal rotation reflects that journey. I reach for Rose Mango Kulfi for pure childhood nostalgia. I grab rich dark chocolate brownie when I need a heavy late night snack. I pick strawberry cheesecake for the perfect salty and sweet balance.
             </p>
             <p>
-              I entered this search because tasting is not just about eating on camera. It is about analyzing the culture of flavor and knowing what hits before the cravings even start.
+              That mixed background inspired my signature pitch. Cutting Chai Kulfi blends masala chai ice cream with brown butter shortbread and a salted date caramel ribbon. 
             </p>
           </div>
 
-          {/* BOX 2: The Systems & Culture */}
+          {/* BOX 2: The Systems & The Pitch */}
           <div className="bg-[#ffde59] text-black border-4 border-black rounded-3xl p-6 shadow-[0_8px_0px_#000] space-y-4 text-sm font-bold leading-relaxed">
             <p className="text-xs font-black tracking-widest uppercase text-[#a83758] mb-1">The Playbook</p>
             <p>
-              I just wrapped a CS degree and Management minor at UBC. I have managed budgets as a VP of Finance, engineered full-stack systems, and grown digital channels to millions of organic views. 
+              I just graduated from UBC with a Computer Science major and a Management minor. I spent my time managing club finances and engineering complex software systems. I also grew digital social channels to millions of organic views. I understand exactly what makes an audience stop scrolling.
             </p>
             <p>
-              I know the difference between what people say they want, and what actually makes them stop scrolling. I build systems to solve friction. Right now, the friction is figuring out exactly what pint you need at 1 AM. The solution is this engine.
+              I build systems to remove friction from daily life. Right now the biggest friction is deciding exactly what pint you crave at midnight. I built this match engine to solve that problem. Tasting is about analyzing the culture of flavor and spotting trends before they peak.
             </p>
           </div>
 
