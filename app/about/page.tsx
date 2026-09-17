@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export default function AboutPage() {
   return (
@@ -25,6 +24,7 @@ export default function AboutPage() {
         </div>
 
         <div className="w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/me-eating-ice-cream.jpg" 
             alt="Aaditya eating ice cream" 
