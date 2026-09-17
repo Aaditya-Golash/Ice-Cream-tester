@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
@@ -24,7 +25,6 @@ export default function AboutPage() {
         </div>
 
         <div className="w-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/me-eating-ice-cream.jpg" 
             alt="Aaditya eating ice cream" 
