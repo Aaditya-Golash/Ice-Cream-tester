@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import React from 'react';
 import './globals.css';
 
 const siteUrl = process.env.SITE_URL ?? 'http://localhost:3000';
@@ -24,9 +25,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <head>
+        {/* eslint-disable @next/next/no-page-custom-font */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800;900&family=Shrikhand&display=swap" rel="stylesheet" />
+        {/* eslint-enable @next/next/no-page-custom-font */}
       </head>
       <body>{children}</body>
     </html>
